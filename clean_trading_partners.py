@@ -1,7 +1,7 @@
 from requests.auth import HTTPBasicAuth
 import requests
 import traceback
-import os, json
+import os, json, sys
 
 class CleanTradingPartners(object):
     def __init__(self,partnerslist):
@@ -94,6 +94,7 @@ class CleanTradingPartners(object):
         return False
 
 if __name__ == '__main__':
-    partnerslist = open('partners.txt','r').read().split('\n')
+    filename = sys.argv[1]
+    partnerslist = open(filename,'r').read().split('\n')
     app = CleanTradingPartners(partnerslist)
     app.verify_and_delete_tp()
