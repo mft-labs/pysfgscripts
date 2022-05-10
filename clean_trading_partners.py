@@ -2,6 +2,7 @@ from requests.auth import HTTPBasicAuth
 import requests
 import traceback
 import os, json, sys
+import argparse
 
 class CleanTradingPartners(object):
     def __init__(self,partnerslist):
@@ -34,6 +35,8 @@ class CleanTradingPartners(object):
         for partner in self.partnerslist:
             details = self.get_partner_details(partner)
             if details != None:
+                print(f"Authentication Type: {details['authenticationType']['code']}")
+                #print(details)
                 if details['authenticationType']['code'] == 'Local':
                     print(f'{partner} is local')
                     rc_list = self.find_routing_channel(details['_id'])
@@ -58,6 +61,8 @@ class CleanTradingPartners(object):
                             print(f'Deleted trading partner {partner} successfully')
                         else:
                             print(f'Failed to delete trading partner {partner}')
+                else:
+                    print(f"{partner} is not an internal user (authentication type is not local)")
             else:
                 print(f'{partner} not found')
         
@@ -94,7 +99,14 @@ class CleanTradingPartners(object):
         return False
 
 if __name__ == '__main__':
-    filename = sys.argv[1]
-    partnerslist = open(filename,'r').read().split('\n')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--infile',
+                    dest='filename',
+                    help='File containing partners list'
+                    )
+    args = parser.parse_args()
+    
+    #filename = sys.argv[1]
+    partnerslist = open(args.filename,'r').read().split('\n')
     app = CleanTradingPartners(partnerslist)
     app.verify_and_delete_tp()
