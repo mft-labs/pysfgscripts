@@ -33,6 +33,8 @@ class CleanTradingPartners(object):
     
     def verify_and_delete_tp(self):
         for partner in self.partnerslist:
+            if partner.strip() == '':
+                continue
             details = self.get_partner_details(partner)
             if details != None:
                 print(f"Authentication Type: {details['authenticationType']['code']}")
