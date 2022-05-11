@@ -44,6 +44,7 @@ class CleanTradingPartners(object):
                     rc_list = self.find_routing_channel(details['_id'])
                     routing_channel_deleted = False
                     if rc_list != None and len(rc_list) > 0 :
+                        deletion_failed = False
                         for rc in rc_list:
                             #print(f'Going to delete routing channel {rc}')
                             success = self.delete_routing_channel(rc)
@@ -51,13 +52,14 @@ class CleanTradingPartners(object):
                                 print(f"{rc['_id']} deleted successfully")
                             else:
                                 print(f"Failed to delete routing channel {rc['_id']}")
+                                deletion_failed = True
                         routing_channel_deleted = True
                     elif rc_list != None and len(rc_list) == 0 :
                         print(f'No routing channel found for {partner}')
                         routing_channel_deleted = True
                     else:
                         print(f"Routing channel retrieval failed ({details['_id']})") 
-                    if routing_channel_deleted:
+                    if routing_channel_deleted and not failed:
                         success2 = self.delete_trading_partner(partner)
                         if success2:
                             print(f'Deleted trading partner {partner} successfully')
@@ -88,7 +90,9 @@ class CleanTradingPartners(object):
     def delete_routing_channel(self,rc):
         print(f"Deleting routing channel with id {rc['_id']}")
         res = requests.delete(f"{self.baseurl}{self.rc_url}/{rc['_id']}",auth=self.auth, headers=self.headers)
-        if res.status_code == 200:
+        if res.status_code == 200 or res.status_code == 404:
+            return True
+        if res.status_code == 400 and 'API000102: Error deleting a part of the Routing Channel' in res.text:
             return True
         print(f'[delete_routing_channel] Status returned:{res.status_code} and response {res.text}')
         return False
