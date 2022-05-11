@@ -39,12 +39,12 @@ class CleanTradingPartners(object):
             if details != None:
                 print(f"Authentication Type: {details['authenticationType']['code']}")
                 #print(details)
+                deletion_failed = False
                 if details['authenticationType']['code'] == 'Local':
                     print(f'{partner} is local')
                     rc_list = self.find_routing_channel(details['_id'])
                     routing_channel_deleted = False
                     if rc_list != None and len(rc_list) > 0 :
-                        deletion_failed = False
                         for rc in rc_list:
                             #print(f'Going to delete routing channel {rc}')
                             success = self.delete_routing_channel(rc)
@@ -59,7 +59,7 @@ class CleanTradingPartners(object):
                         routing_channel_deleted = True
                     else:
                         print(f"Routing channel retrieval failed ({details['_id']})") 
-                    if routing_channel_deleted and not failed:
+                    if routing_channel_deleted and not deletion_failed:
                         success2 = self.delete_trading_partner(partner)
                         if success2:
                             print(f'Deleted trading partner {partner} successfully')
