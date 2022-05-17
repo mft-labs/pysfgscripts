@@ -1,8 +1,12 @@
 from cassandra.cluster import Cluster
+import ssl
 
 class CasUtil(object):
     def __init__(self,mailbox):
-        self.cluster = Cluster(['192.168.25.250'],port=9042)
+        self.cluster = Cluster(['192.168.25.250'],port=9042,connection_class=None,
+                            ssl_options=dict(ca_certs='<certfile>',
+                                   cert_reqs=ssl.CERT_REQUIRED,
+                                   ssl_version=ssl.PROTOCOL_TLSv1))
         self.session = self.cluster.connect('mailbox',wait_for_all_pools=True)
         self.details = {}
         self.details = self.get_details(mailbox)
