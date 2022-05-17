@@ -3,6 +3,7 @@ import requests
 import traceback
 import os, json, sys
 import argparse
+from casconnector import CasUtil
 
 class CleanTradingPartners(object):
     def __init__(self,partnerslist):
@@ -11,7 +12,7 @@ class CleanTradingPartners(object):
         self.baseurl = self.props['SFG_API_BASEURL']
         #self.username = self.props['SFG_API_USERNAME']
         #self.password = self.props['SFG_API_PASSWORD']
-        self.  headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+        self.headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
         self.auth = HTTPBasicAuth(self.props['SFG_API_USERNAME'], self.props['SFG_API_PASSWORD'])
         self.partners_url = '/B2BAPIs/svc/tradingpartners/'
         self.rc_url = '/B2BAPIs/svc/routingchannels/'
@@ -50,11 +51,23 @@ class CleanTradingPartners(object):
                             success = self.delete_routing_channel(rc)
                             if success:
                                 print(f"{rc['_id']} deleted successfully")
+                                driver = CasUtil(partner)
+                                driver.delete_step1()
+                                driver.delete_step2()
+                                driver.delete_step3()
+                                driver.delete_step4()
+                                #driver.close_session()
                             else:
                                 print(f"Failed to delete routing channel {rc['_id']}")
                                 deletion_failed = True
                         routing_channel_deleted = True
                     elif rc_list != None and len(rc_list) == 0 :
+                        driver = CasUtil(partner)
+                        driver.delete_step1()
+                        driver.delete_step2()
+                        driver.delete_step3()
+                        driver.delete_step4()
+                        #driver.close_session()
                         print(f'No routing channel found for {partner}')
                         routing_channel_deleted = True
                     else:
