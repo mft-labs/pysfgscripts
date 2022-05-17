@@ -34,54 +34,57 @@ class CleanTradingPartners(object):
     
     def verify_and_delete_tp(self):
         for partner in self.partnerslist:
-            if partner.strip() == '':
-                continue
-            details = self.get_partner_details(partner)
-            if details != None:
-                print(f"Authentication Type: {details['authenticationType']['code']}")
-                #print(details)
-                deletion_failed = False
-                if details['authenticationType']['code'] == 'Local':
-                    print(f'{partner} is local')
-                    rc_list = self.find_routing_channel(details['_id'])
-                    routing_channel_deleted = False
-                    if rc_list != None and len(rc_list) > 0 :
-                        for rc in rc_list:
-                            #print(f'Going to delete routing channel {rc}')
-                            success = self.delete_routing_channel(rc)
-                            if success:
-                                print(f"{rc['_id']} deleted successfully")
-                                driver = CasUtil(partner)
-                                driver.delete_step1()
-                                driver.delete_step2()
-                                driver.delete_step3()
-                                driver.delete_step4()
-                                #driver.close_session()
-                            else:
-                                print(f"Failed to delete routing channel {rc['_id']}")
-                                deletion_failed = True
-                        routing_channel_deleted = True
-                    elif rc_list != None and len(rc_list) == 0 :
-                        driver = CasUtil(partner)
-                        driver.delete_step1()
-                        driver.delete_step2()
-                        driver.delete_step3()
-                        driver.delete_step4()
-                        #driver.close_session()
-                        print(f'No routing channel found for {partner}')
-                        routing_channel_deleted = True
-                    else:
-                        print(f"Routing channel retrieval failed ({details['_id']})") 
-                    if routing_channel_deleted and not deletion_failed:
-                        success2 = self.delete_trading_partner(partner)
-                        if success2:
-                            print(f'Deleted trading partner {partner} successfully')
+            try:
+                if partner.strip() == '':
+                    continue
+                details = self.get_partner_details(partner)
+                if details != None:
+                    print(f"Authentication Type: {details['authenticationType']['code']}")
+                    #print(details)
+                    deletion_failed = False
+                    if details['authenticationType']['code'] == 'Local':
+                        print(f'{partner} is local')
+                        rc_list = self.find_routing_channel(details['_id'])
+                        routing_channel_deleted = False
+                        if rc_list != None and len(rc_list) > 0 :
+                            for rc in rc_list:
+                                #print(f'Going to delete routing channel {rc}')
+                                success = self.delete_routing_channel(rc)
+                                if success:
+                                    print(f"{rc['_id']} deleted successfully")
+                                    driver = CasUtil(partner)
+                                    driver.delete_step1()
+                                    driver.delete_step2()
+                                    driver.delete_step3()
+                                    driver.delete_step4()
+                                    #driver.close_session()
+                                else:
+                                    print(f"Failed to delete routing channel {rc['_id']}")
+                                    deletion_failed = True
+                            routing_channel_deleted = True
+                        elif rc_list != None and len(rc_list) == 0 :
+                            driver = CasUtil(partner)
+                            driver.delete_step1()
+                            driver.delete_step2()
+                            driver.delete_step3()
+                            driver.delete_step4()
+                            #driver.close_session()
+                            print(f'No routing channel found for {partner}')
+                            routing_channel_deleted = True
                         else:
-                            print(f'Failed to delete trading partner {partner}')
+                            print(f"Routing channel retrieval failed ({details['_id']})") 
+                        if routing_channel_deleted and not deletion_failed:
+                            success2 = self.delete_trading_partner(partner)
+                            if success2:
+                                print(f'Deleted trading partner {partner} successfully')
+                            else:
+                                print(f'Failed to delete trading partner {partner}')
+                    else:
+                        print(f"{partner} is not an internal user (authentication type is not local)")
                 else:
-                    print(f"{partner} is not an internal user (authentication type is not local)")
-            else:
-                print(f'{partner} not found')
+                    print(f'{partner} not found')
+            except:
+                print(f'Failed process for {partner} {traceback.format_exc()}')
         
     def get_partner_details(self, partner):
         print(f'Going to find the details of partner {partner}')
