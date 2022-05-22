@@ -7,6 +7,9 @@ import argparse
 class VerifyTradingPartners(object):
     def __init__(self,partnerslist):
         self.log_file = open('verify-partners.log','w')
+        self.report=open('tp-report.csv','w')
+        self.report.write('"Partner name","Status"')
+        self.report.write('\n')
         self.partnerslist = partnerslist
         self.props = self.get_properties()
         self.baseurl = self.props['SFG_API_BASEURL']
@@ -43,12 +46,16 @@ class VerifyTradingPartners(object):
                 if details != None:
                     self.log_file.write(f'##FOUND: {partner} exists, details are {details}')
                     self.log_file.write('\n')
+                    self.report.write(f'"{partner}","Found"')
                 else:
                     self.log_file.write(f'##NOT_FOUND: {partner} cleared successfully')
                     self.log_file.write('\n')
+                    self.report.write(f'"{partner}","Not Found"')
+                self.report.write('\n')
             except:
                 self.log_file(f'Failed verify for {partner}, or cleared {traceback.format_exc()}')
         self.log_file.close()
+        self.report.close()
 
     def get_partner_details(self, partner):
         self.log_file.write(f'##LOG: Going to find the details of partner {partner}')
