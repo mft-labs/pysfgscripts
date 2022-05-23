@@ -16,8 +16,10 @@ class CleanTradingPartners(object):
         self.baseurl = self.props['SFG_API_BASEURL']
         self.headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
         self.auth = HTTPBasicAuth(self.props['SFG_API_USERNAME'], self.props['SFG_API_PASSWORD'])
-        self.partners_url = '/B2BAPIs/svc/tradingpartners/'
-        self.rc_url = '/B2BAPIs/svc/routingchannels/'
+        #self.partners_url = '/B2BAPIs/svc/tradingpartners/'
+        #self.rc_url = '/B2BAPIs/svc/routingchannels/'
+        self.partners_url = '/tradingpartners/'
+        self.rc_url = '/routingchannels/'
 
     def get_properties(self):
         self.logger.debug('Reading profiles from sfgutils')
@@ -91,14 +93,14 @@ class CleanTradingPartners(object):
         
     def get_partner_details(self, partner):
         print(f'Going to find the details of partner {partner}')
-        res = requests.get(f'{self.baseurl}{self.partners_url}/{partner}',auth=self.auth, headers=self.headers)
+        res = requests.get(f'{self.baseurl}{self.partners_url}/{partner}',auth=self.auth, headers=self.headers, verify=False)
         if res.status_code == 200:
             return res.json()
         print(f'[get_partner_details] Status returned:{res.status_code} and response {res.text}')
         return None
 
     def find_routing_channel(self,sfgid):
-        res = requests.get(f'{self.baseurl}{self.rc_url}/?searchByConsumer=&searchByTemplate=&searchByProducer={sfgid}',auth=self.auth, headers=self.headers)
+        res = requests.get(f'{self.baseurl}{self.rc_url}/?searchByConsumer=&searchByTemplate=&searchByProducer={sfgid}',auth=self.auth, headers=self.headers, verify=False)
         if res.status_code == 200:
             return res.json()
         if res.status_code == 404:
@@ -108,7 +110,7 @@ class CleanTradingPartners(object):
 
     def delete_routing_channel(self,rc):
         print(f"Deleting routing channel with id {rc['_id']}")
-        res = requests.delete(f"{self.baseurl}{self.rc_url}/{rc['_id']}",auth=self.auth, headers=self.headers)
+        res = requests.delete(f"{self.baseurl}{self.rc_url}/{rc['_id']}",auth=self.auth, headers=self.headers, verify=False)
         if res.status_code == 200 or res.status_code == 404:
             return True
         if res.status_code == 400 and 'API000102: Error deleting a part of the Routing Channel' in res.text:
@@ -117,7 +119,7 @@ class CleanTradingPartners(object):
         return False
 
     def delete_trading_partner(self,partner):
-        res = requests.delete(f'{self.baseurl}{self.partners_url}/{partner}',auth=self.auth, headers=self.headers)
+        res = requests.delete(f'{self.baseurl}{self.partners_url}/{partner}',auth=self.auth, headers=self.headers, verify=False)
         if res.status_code == 200:
             return True
         print(f'[delete_trading_partner] Status returned:{res.status_code} and response {res.text}')
