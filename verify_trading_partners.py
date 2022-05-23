@@ -60,7 +60,7 @@ class VerifyTradingPartners(object):
     def get_partner_details(self, partner):
         self.log_file.write(f'##LOG: Going to find the details of partner {partner}')
         self.log_file.write('\n')
-        res = requests.get(f'{self.baseurl}{self.partners_url}/{partner}',auth=self.auth, headers=self.headers)
+        res = requests.get(f'{self.baseurl}{self.partners_url}/{partner}',auth=self.auth, headers=self.headers, verify=False)
         if res.status_code == 200:
             return res.json()
         if res.status_code == 404:
