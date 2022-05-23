@@ -3,10 +3,12 @@ import requests
 import traceback
 import os, json, sys
 import argparse
-
+from logger import PyLogger
+from datetime import datetime
 class VerifyTradingPartners(object):
     def __init__(self,partnerslist):
-        self.log_file = open('verify-partners.log','w')
+        now = datetime.now()
+        self.logger = PyLogger('verify_tp_{}.log'.format(now.strftime('%Y%b%d_%H%M%S')))
         self.report=open('tp-report.csv','w')
         self.report.write('"Partner name","Status"')
         self.report.write('\n')
@@ -23,6 +25,7 @@ class VerifyTradingPartners(object):
         self.rc_url = '/routingchannels/'
 
     def get_properties(self):
+        self.logger.debug('Reading sfgutils properties')
         pfile = os.environ["AMF_SFG_HOME"]+"/properties/sfgutils.properties"
         pmap = {}
         d = open(pfile, 'r').read()
@@ -39,34 +42,31 @@ class VerifyTradingPartners(object):
 
     def verify_tps(self):
         for partner in self.partnerslist:
+            
             try:
                 if partner.strip() == '':
                     continue
+                self.logger.debug(f'Checking existence of partner {partner}')
                 details = self.get_partner_details(partner)
                 if details != None:
-                    self.log_file.write(f'##FOUND: {partner} exists, details are {details}')
-                    self.log_file.write('\n')
+                    self.logger.debug(f'##FOUND: {partner} exists, details are {details}')
                     self.report.write(f'"{partner}","Found"')
                 else:
-                    self.log_file.write(f'##NOT_FOUND: {partner} cleared successfully')
-                    self.log_file.write('\n')
+                    self.logger.debug(f'##NOT_FOUND: {partner} cleared successfully')
                     self.report.write(f'"{partner}","Not Found"')
                 self.report.write('\n')
             except:
-                self.log_file(f'Failed verify for {partner}, or cleared {traceback.format_exc()}')
-        self.log_file.close()
+                self.logger.debug(f'Failed verify for {partner}, or cleared {traceback.format_exc()}')
         self.report.close()
 
     def get_partner_details(self, partner):
-        self.log_file.write(f'##LOG: Going to find the details of partner {partner}')
-        self.log_file.write('\n')
+        self.logger.debug(f'##LOG: Going to find the details of partner {partner}')
         res = requests.get(f'{self.baseurl}{self.partners_url}/{partner}',auth=self.auth, headers=self.headers, verify=False)
         if res.status_code == 200:
             return res.json()
         if res.status_code == 404:
             return None
-        self.log_file.write(f'##LOG: [get_partner_details] Status returned:{res.status_code}')
-        self.log_file.write('\n')
+        self.logger.debug(f'##LOG: [get_partner_details] Status returned:{res.status_code}')
         return None
 
 if __name__ == "__main__":

@@ -3,21 +3,24 @@ import requests
 import traceback
 import os, json, sys
 import argparse
-from casconnector import CasUtil
+from logger import PyLogger
+from datetime import datetime
+import time
 
 class CleanTradingPartners(object):
     def __init__(self,partnerslist):
+        now = datetime.now()
+        self.logger = PyLogger('clean_tp_{}.log'.format(now.strftime('%Y%b%d_%H%M%S')))
         self.partnerslist = partnerslist
         self.props = self.get_properties()
         self.baseurl = self.props['SFG_API_BASEURL']
-        #self.username = self.props['SFG_API_USERNAME']
-        #self.password = self.props['SFG_API_PASSWORD']
         self.headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
         self.auth = HTTPBasicAuth(self.props['SFG_API_USERNAME'], self.props['SFG_API_PASSWORD'])
         self.partners_url = '/B2BAPIs/svc/tradingpartners/'
         self.rc_url = '/B2BAPIs/svc/routingchannels/'
 
     def get_properties(self):
+        self.logger.debug('Reading profiles from sfgutils')
         pfile = os.environ["AMF_SFG_HOME"]+"/properties/sfgutils.properties"
         pmap = {}
         d = open(pfile, 'r').read()
@@ -33,17 +36,19 @@ class CleanTradingPartners(object):
         return pmap
     
     def verify_and_delete_tp(self):
+        self.logger.debug('Going to run cleanup process')
         for partner in self.partnerslist:
             try:
                 if partner.strip() == '':
                     continue
+                self.logger.debug(f'Retrieving details of {partner} from SFG')
                 details = self.get_partner_details(partner)
                 if details != None:
-                    print(f"Authentication Type: {details['authenticationType']['code']}")
+                    self.logger.debug(f"Authentication Type: {details['authenticationType']['code']}")
                     #print(details)
                     deletion_failed = False
                     if details['authenticationType']['code'] == 'Local':
-                        print(f'{partner} is local')
+                        self.logger.debug(f'{partner} is local')
                         rc_list = self.find_routing_channel(details['_id'])
                         routing_channel_deleted = False
                         if rc_list != None and len(rc_list) > 0 :
@@ -51,40 +56,38 @@ class CleanTradingPartners(object):
                                 #print(f'Going to delete routing channel {rc}')
                                 success = self.delete_routing_channel(rc)
                                 if success:
-                                    print(f"{rc['_id']} deleted successfully")
-                                    driver = CasUtil(partner)
-                                    driver.delete_step1()
-                                    driver.delete_step2()
-                                    driver.delete_step3()
-                                    driver.delete_step4()
-                                    #driver.close_session()
+                                    self.logger.debug(f"{rc['_id']} deleted successfully")
+                                    #driver = CasUtil(partner)
+                                    #driver.delete_step1()
+                                    #driver.delete_step2()
+                                    #driver.delete_step3()
+                                    #driver.delete_step4()
                                 else:
-                                    print(f"Failed to delete routing channel {rc['_id']}")
+                                    self.logger.debug(f"Failed to delete routing channel {rc['_id']}")
                                     deletion_failed = True
                             routing_channel_deleted = True
                         elif rc_list != None and len(rc_list) == 0 :
-                            driver = CasUtil(partner)
-                            driver.delete_step1()
-                            driver.delete_step2()
-                            driver.delete_step3()
-                            driver.delete_step4()
-                            #driver.close_session()
-                            print(f'No routing channel found for {partner}')
+                            #driver = CasUtil(partner)
+                            #driver.delete_step1()
+                            #driver.delete_step2()
+                            #driver.delete_step3()
+                            #driver.delete_step4()
+                            self.logger.debug(f'No routing channel found for {partner}')
                             routing_channel_deleted = True
                         else:
-                            print(f"Routing channel retrieval failed ({details['_id']})") 
+                            self.logger.debug(f"Routing channel retrieval failed ({details['_id']})") 
                         if routing_channel_deleted and not deletion_failed:
                             success2 = self.delete_trading_partner(partner)
                             if success2:
-                                print(f'Deleted trading partner {partner} successfully')
+                                self.logger.debug(f'Deleted trading partner {partner} successfully')
                             else:
-                                print(f'Failed to delete trading partner {partner}')
+                                self.logger.debug(f'Failed to delete trading partner {partner}')
                     else:
-                        print(f"{partner} is not an internal user (authentication type is not local)")
+                        self.logger.debug(f"{partner} is not an internal user (authentication type is not local)")
                 else:
-                    print(f'{partner} not found')
+                    self.logger.debug(f'{partner} not found')
             except:
-                print(f'Failed process for {partner} {traceback.format_exc()}')
+                self.logger.error(f'Failed process for {partner} {traceback.format_exc()}')
         
     def get_partner_details(self, partner):
         print(f'Going to find the details of partner {partner}')
